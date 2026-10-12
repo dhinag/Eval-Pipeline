@@ -8170,7 +8170,7 @@ These are the findings worth reading the reports for. Each one is checked agains
 - **Scrub precision:** the biggest source of false positives is product names ("Merino", "Studio") labelled as people. A catalogue allow-list would remove it; that needs a real product catalogue, so it is listed as next work.
 - **Deliberate gaps:** one phrasing each for card last-four digits and dates of birth is not covered by the recognizers, so recall is not tuned to the generator.
 - **Dedup:** embeddings place different conversations about the same intent close together, so a threshold that finds every duplicate also merges distinct conversations. The threshold is calibrated to the highest duplicate recall that keeps the false-merge rate at or below 5%.
-- **Enrichment:** the local 8B model is compared with a free keyword baseline, and agreement between two samples is reported as a confidence signal, so it is clear whether the confidence is worth using to prioritise review.
+- **Enrichment:** the local 8B model is compared with a free keyword baseline. On the 200-trace demo run the model labelled intent better than the baseline but did not beat it on failure mode, because most traces are correct and the baseline defaults to "none". Agreement between two samples was 1.0 for nearly every record, so it barely discriminates and does little to prioritise review; a stronger uncertainty signal is listed as next work.
 
 ## Design decisions
 
