@@ -74,6 +74,10 @@ def _enrich_section(data: dict[str, Any]) -> str:
              f"failure-mode accuracy {_fmt(data['failure_mode_accuracy'])}.", "",
              "| Confidence | Records | Intent accuracy |", "| --- | --- | --- |"]
     lines += [f"| {c} | {b['n']} | {_fmt(b['intent_accuracy'])} |" for c, b in data["by_confidence"].items()]
+    baseline = data.get("baseline")
+    if baseline:
+        lines += ["", f"Keyword baseline on the same records: intent accuracy {_fmt(baseline['intent_accuracy'])}, "
+                      f"failure-mode accuracy {_fmt(baseline['failure_mode_accuracy'])}."]
     return "\n".join(lines)
 
 

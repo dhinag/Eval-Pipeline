@@ -104,3 +104,17 @@ def test_a_failed_run_prints_the_command_that_resumes_it(tmp_path: Path, capsys:
     err = capsys.readouterr().err
     run_id = next((tmp_path / "runs").iterdir()).name
     assert f"--run-id {run_id}" in err and "Resume with" in err
+
+
+def test_enrichment_evaluation_includes_the_keyword_baseline_and_the_report_shows_it(tmp_path: Path, data_dir: Path) -> None:
+    cfg = _config(tmp_path, data_dir)
+    runs = tmp_path / "runs"
+    main(["run", "--config", str(cfg), "--run-id", "r1", "--runs-dir", str(runs)])
+    main(["eval", "--run", str(runs / "r1"), "--truth", str(data_dir / "ground_truth.jsonl"), "--what", "enrich"])
+    result = json.loads((runs / "r1/eval/enrich.json").read_text())
+    assert set(result["baseline"]) >= {"labelled", "intent_accuracy", "failure_mode_accuracy"}
+    assert result["baseline"]["labelled"] == result["labelled"]
+    assert "Keyword baseline" in (runs / "r1/report.md").read_text()
+    # The baseline never touches the run's own decision log.
+    assert "enrich-baseline" not in (runs / "r1/decisions.jsonl").read_text()
+

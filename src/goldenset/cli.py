@@ -156,12 +156,36 @@ def _cmd_eval(args: argparse.Namespace) -> int:
         elif what == "coverage":
             _write_eval(run_dir, "coverage", evaluate_coverage(run_dir, truths))
         elif what == "enrich":
-            records = (Record.model_validate(r) for r in read_jsonl(run_dir / "stages" / "06_enrich.jsonl"))
-            _write_eval(run_dir, "enrich", evaluate_enrichment(records, truths))
+            records = [Record.model_validate(r) for r in read_jsonl(run_dir / "stages" / "06_enrich.jsonl")]
+            result = evaluate_enrichment(records, truths)
+            result["baseline"] = _keyword_baseline(run_dir, saved, records, truths)
+            _write_eval(run_dir, "enrich", result)
         elif what == "review":
             _write_eval(run_dir, "review", evaluate_review(run_dir, saved["review"]["hourly_rate_usd"]))
     write_report(run_dir)
     return 0
+
+
+def _keyword_baseline(run_dir: Path, saved: dict[str, Any], records: list[Any], truths: Any) -> dict[str, Any]:
+    """Label the same records with the free keyword baseline, to put the LLM's accuracy in context."""
+    import tempfile
+
+    from goldenset.config import RunConfig
+    from goldenset.evaluation.enrich_eval import evaluate_enrichment
+    from goldenset.llm import RuleBasedLLM
+    from goldenset.pipeline.context import DecisionLog, Services, StageContext
+    from goldenset.stages.enrich import EnrichStage
+
+    with tempfile.TemporaryDirectory() as scratch:  # its own log: the run's decisions.jsonl stays untouched
+        ctx = StageContext(
+            "enrich-baseline", run_dir, RunConfig.model_validate(saved), DecisionLog(Path(scratch) / "d.jsonl"),
+            Services(llm=RuleBasedLLM()),
+        )
+        fresh = [r.model_copy(deep=True) for r in records]
+        for record in fresh:
+            record.meta.enrichment = None
+        labelled = list(EnrichStage().run(iter(fresh), ctx))
+    return evaluate_enrichment(labelled, truths)
 
 
 def _add_calibrate(sub: Any) -> None:
