@@ -3,8 +3,24 @@
   "input_path": "data/full/traces.jsonl",
   "seed_golden_path": "data/full/seed_golden.jsonl",
   "cache_dir": ".cache",
-  "embed": {"kind": "ollama", "model": "nomic-embed-text"},
+  "embed": {
+    "kind": "ollama",
+    "model": "nomic-embed-text"
+  },
   "llm_kind": "ollama",
-  "sample": {"target": 4000, "floor_per_shape": 5},
-  "review": {"budget": 300, "rereview_fraction": 0.1, "hourly_rate_usd": 60.0}
+  "sample": {
+    "target": 1000,
+    "floor_per_shape": 5
+  },
+  "review": {
+    "budget": 300,
+    "rereview_fraction": 0.1,
+    "hourly_rate_usd": 60.0
+  },
+  "dedup": {
+    "threshold": 0.98
+  },
+  "novelty": {
+    "threshold": 0.97
+  }
 }

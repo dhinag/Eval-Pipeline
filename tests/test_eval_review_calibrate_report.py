@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from goldenset.evaluation.calibrate import sweep_dedup, sweep_novelty
+from goldenset.evaluation.calibrate import DEDUP_GRID, NOVELTY_GRID, sweep_dedup, sweep_novelty
 from goldenset.evaluation.report import funnel_table, render_report, write_report
 from goldenset.evaluation.review_eval import evaluate_review
 from goldenset.jsonl import write_jsonl
@@ -78,6 +78,39 @@ def test_dedup_sweep_falls_back_to_the_strictest_threshold_when_everything_false
     vecs = np.array([[1, 0], [1, 0]], dtype=np.float32)
     result = sweep_dedup(vecs, order=[0, 1], gt_clusters=["A", "B"], thresholds=[0.5, 0.9])
     assert result.chosen == 0.9
+
+
+def test_a_threshold_that_drops_nothing_never_counts_as_meeting_the_false_merge_cap() -> None:
+    # At 0.95 nothing is merged, so its false-merge rate is a vacuous 0.0. It must not beat a threshold that works.
+    vecs = np.array([[1.0, 0.0], [0.9, 0.43589]], dtype=np.float32)
+    result = sweep_dedup(vecs, order=[0, 1], gt_clusters=["A", "B"], thresholds=[0.5, 0.95])
+    assert result.chosen == 0.5
+    assert result.cap_met is False
+
+
+def test_when_the_cap_cannot_be_met_the_best_balance_of_recall_and_false_merges_wins() -> None:
+    # C is a different conversation with the same vector as A, so every threshold false-merges it and the cap
+    # can never be met. At 0.5 the B pair is also merged into A; at 0.97 only the true duplicates and C are.
+    a, b = [1.0, 0.0], [0.96, 0.28]
+    vecs = np.array([a, a, a, b, b], dtype=np.float32)  # a1, a2 (same scenario), c, b1, b2 (same scenario)
+    result = sweep_dedup(vecs, order=[0, 1, 2, 3, 4], gt_clusters=["A", "A", "C", "B", "B"], thresholds=[0.5, 0.97])
+    rows = {r["threshold"]: r for r in result.rows}
+    assert rows[0.5]["drops"] == 4.0 and rows[0.97]["drops"] == 3.0
+    assert result.cap_met is False
+    assert result.chosen == 0.97
+
+
+def test_cap_met_is_true_when_a_real_threshold_stays_within_the_limit() -> None:
+    vecs = np.array([[1, 0], _unit(0.99), [0, 1], [0.05, 0.9987]], dtype=np.float32)
+    vecs /= np.linalg.norm(vecs, axis=1, keepdims=True)
+    result = sweep_dedup(vecs, order=[0, 1, 2, 3], gt_clusters=["A", "A", "B", "B"], thresholds=[0.9])
+    assert result.cap_met is True and result.chosen == 0.9
+
+
+def test_the_sweep_grids_stay_below_one_and_are_rounded() -> None:
+    for grid in (DEDUP_GRID, NOVELTY_GRID):
+        assert max(grid) < 1.0 and all(g == round(g, 2) for g in grid)
+    assert DEDUP_GRID[0] == 0.7 and DEDUP_GRID[-1] == 0.99 and NOVELTY_GRID[0] == 0.5 and NOVELTY_GRID[-1] == 0.99
 
 
 def test_novelty_sweep_balances_covered_recall_against_novel_loss() -> None:

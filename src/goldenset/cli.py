@@ -181,11 +181,11 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
     embedder = make_embedder(config.embed, Path(config.cache_dir))
     result = calibrate_run(args.run, load_truths(args.truth), embedder, config)
     print(f"Embedding model: {embedder.model_id}")
-    print(f"dedup threshold: {result['dedup'].chosen}")
+    print(f"dedup threshold: {result['dedup'].chosen}" + ("" if result["dedup"].cap_met else " (false-merge cap not met; chosen for best recall/precision balance)"))
     print(f"novelty threshold: {result['novelty'].chosen}")
     (args.run / "eval").mkdir(exist_ok=True)
     (args.run / "eval" / "calibration.json").write_text(
-        json.dumps({"model": embedder.model_id, **{k: {"chosen": v.chosen, "rows": v.rows} for k, v in result.items()}}, indent=2)
+        json.dumps({"model": embedder.model_id, **{k: {"chosen": v.chosen, "cap_met": v.cap_met, "rows": v.rows} for k, v in result.items()}}, indent=2)
     )
     if args.write:
         data = json.loads(args.write.read_text())
