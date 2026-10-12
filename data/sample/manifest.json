@@ -1,0 +1,98 @@
+{
+  "all": {
+    "decoy_traces": 41,
+    "failure_modes": {
+      "ambiguous": 8,
+      "data_leak": 1,
+      "missed_escalation": 9,
+      "none": 166,
+      "off_topic_or_injection_mishandled": 1,
+      "tool_error_mishandled": 5,
+      "wrong_policy": 10
+    },
+    "intents": {
+      "account_login": 6,
+      "billing_charges": 23,
+      "cancellation_changes": 7,
+      "damaged_goods": 2,
+      "legal_privacy_request": 1,
+      "off_topic": 2,
+      "order_status": 72,
+      "product_questions": 15,
+      "promotions": 10,
+      "prompt_injection": 2,
+      "returns_refunds": 26,
+      "shipping_delivery": 29,
+      "warranty_claim": 5
+    },
+    "pii_locations": {
+      "assistant": 1,
+      "tool": 10,
+      "user": 93
+    },
+    "pii_traces": 104,
+    "pii_types": {
+      "ACCOUNT_ID": 1,
+      "CARD_LAST4": 5,
+      "CREDIT_CARD": 1,
+      "DATE_OF_BIRTH": 18,
+      "EMAIL_ADDRESS": 50,
+      "OBFUSCATED_EMAIL": 3,
+      "PERSON": 29,
+      "PHONE_NUMBER": 24,
+      "STREET_ADDRESS": 19
+    }
+  },
+  "distinct": {
+    "decoy_traces": 27,
+    "failure_modes": {
+      "ambiguous": 5,
+      "data_leak": 1,
+      "missed_escalation": 7,
+      "none": 90,
+      "off_topic_or_injection_mishandled": 1,
+      "tool_error_mishandled": 4,
+      "wrong_policy": 6
+    },
+    "intents": {
+      "account_login": 5,
+      "billing_charges": 15,
+      "cancellation_changes": 5,
+      "damaged_goods": 1,
+      "legal_privacy_request": 1,
+      "off_topic": 2,
+      "order_status": 33,
+      "product_questions": 10,
+      "promotions": 7,
+      "prompt_injection": 2,
+      "returns_refunds": 15,
+      "shipping_delivery": 15,
+      "warranty_claim": 3
+    },
+    "pii_locations": {
+      "assistant": 1,
+      "tool": 6,
+      "user": 49
+    },
+    "pii_traces": 56,
+    "pii_types": {
+      "ACCOUNT_ID": 1,
+      "CARD_LAST4": 3,
+      "CREDIT_CARD": 1,
+      "DATE_OF_BIRTH": 3,
+      "EMAIL_ADDRESS": 23,
+      "OBFUSCATED_EMAIL": 3,
+      "PERSON": 20,
+      "PHONE_NUMBER": 14,
+      "STREET_ADDRESS": 9
+    }
+  },
+  "duplicate_kinds": {
+    "distinct": 114,
+    "exact": 16,
+    "near": 70
+  },
+  "max_cluster_size": 15,
+  "n": 200,
+  "seed": 7
+}
