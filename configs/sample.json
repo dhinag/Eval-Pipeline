@@ -1,0 +1,10 @@
+{
+  "seed": 1337,
+  "input_path": "data/sample/traces.jsonl",
+  "seed_golden_path": "data/sample/seed_golden.jsonl",
+  "cache_dir": ".cache",
+  "embed": {"kind": "ollama", "model": "nomic-embed-text"},
+  "llm_kind": "ollama",
+  "sample": {"target": 100, "floor_per_shape": 2},
+  "review": {"budget": 30, "rereview_fraction": 0.1, "hourly_rate_usd": 60.0}
+}
