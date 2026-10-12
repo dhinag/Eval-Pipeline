@@ -126,5 +126,4 @@ Near-duplicates fall in clusters of 2 to 50 traces, with a few very large cluste
 
 ## Open items
 
-- Whether to compare Presidio's default against Presidio with an added GLiNER recognizer, and a simple baseline.
 - Whether to add a small public support-conversation sample later (licence check needed).

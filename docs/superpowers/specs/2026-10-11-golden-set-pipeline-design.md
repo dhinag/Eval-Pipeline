@@ -160,11 +160,11 @@ The trace schema, golden-record schema and eval-result schema are defined once a
 - Real production trace ingestion and a tracing system.
 - Orchestration frameworks and a database record store. The README describes these as the growth path.
 - Multi-reviewer workflows.
+- Comparing alternative PII detectors (for example a GLiNER recognizer). Presidio is the only scrub engine.
 - Public datasets, unless added later after a licence check.
 
 ## 11. Open items
 
-- Whether the scrub stage also compares Presidio's default against Presidio with an added GLiNER recognizer and a simple baseline.
 - Whether to add a small public support-conversation sample later.
 - Python tooling: package manager, type checker and test runner.
 - Exact schema fields, similarity thresholds (calibrated, not guessed) and enrichment prompt wording, all settled during implementation.
