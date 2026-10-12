@@ -88,6 +88,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
         stats = runner.run(only=args.stage, force=args.force, until=args.until)
     except (StageFailed, EmbedderUnavailable) as exc:
         print(exc, file=sys.stderr)
+        runs_dir = f" --runs-dir {args.runs_dir}" if args.runs_dir != Path("runs") else ""
+        print(f"Resume with: goldenset run --config {args.config} --run-id {run_dir.name}{runs_dir}", file=sys.stderr)
         return 1
     write_report(run_dir)
     print(funnel_table(stats))

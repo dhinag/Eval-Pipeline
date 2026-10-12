@@ -170,3 +170,30 @@ def test_report_without_evaluation_still_renders_the_funnel(tmp_path: Path) -> N
     (run_dir / "stats.json").write_text(json.dumps(STATS))
     text = render_report(run_dir)
     assert "## Funnel" in text and "PII scrub" not in text
+
+
+def test_review_metrics_ignore_decisions_for_traces_that_are_no_longer_queued(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run"
+    write_jsonl(run_dir / "stages/07_review_queue.jsonl", [_enriched("t-1")])
+    store = ReviewStore(run_dir)
+    store.record(_decision("t-1", "accept", 10))
+    store.record(_decision("gone", "accept", 10))
+    store.record(_decision("gone", "accept", 10, rereview=True))
+    result = evaluate_review(run_dir, hourly_rate_usd=60.0)
+    assert result["first_pass"]["decisions"] == 1 and result["golden"] == 1
+
+
+def test_the_report_says_when_the_false_merge_cap_could_not_be_met(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run"
+    (run_dir / "eval").mkdir(parents=True)
+    (run_dir / "stats.json").write_text(json.dumps(STATS))
+    (run_dir / "eval" / "calibration.json").write_text(json.dumps({
+        "model": "ollama:nomic-embed-text",
+        "dedup": {"chosen": 0.98, "cap_met": False, "rows": [{"threshold": 0.98, "drops": 944.0, "dup_recall": 0.4973, "false_merge_rate": 0.5074}]},
+        "novelty": {"chosen": 0.97, "cap_met": True, "rows": [{"threshold": 0.97, "covered_recall": 1.0, "novel_loss": 0.0416}]},
+    }))
+    text = render_report(run_dir)
+    assert "## Calibration" in text and "ollama:nomic-embed-text" in text
+    assert "dedup threshold 0.98" in text and "false-merge cap not met" in text
+    assert "duplicate recall 0.4973" in text and "false-merge rate 0.5074" in text
+    assert "novelty threshold 0.97" in text

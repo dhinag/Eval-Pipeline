@@ -60,7 +60,12 @@ class ScrubStage:
         engine: Detector = self._engine or ScrubEngine(ctx.config.scrub.spacy_model, ctx.config.scrub.threshold)
         for record in records:
             trace_id = record.trace.trace_id
-            result = scrub_trace(record.trace, engine)
+            try:
+                result = scrub_trace(record.trace, engine)
+            except Exception as exc:  # one odd record must not abort or wedge the run
+                # Only the exception type is logged: library error text can contain the input.
+                ctx.quarantine(trace_id, "scrub_error", {"error_type": type(exc).__name__})
+                continue
             if result.residual:
                 ctx.quarantine(trace_id, "residual_pii", {"entity_types": sorted(set(result.residual))})
                 continue

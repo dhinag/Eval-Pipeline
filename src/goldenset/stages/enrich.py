@@ -88,8 +88,10 @@ def _label(llm: LLM, conversation: str, temperature: float, seed: int, retries: 
     """One validated answer, or None when every attempt was unusable. Unreachable model propagates."""
     for attempt in range(retries + 1):
         try:
+            # At temperature 0 decoding is greedy and the seed is ignored, so a retry would repeat a bad answer.
             raw = llm.complete_json(
-                _system_prompt(), conversation, ENRICH_SCHEMA, temperature=temperature, seed=seed + attempt * 100
+                _system_prompt(), conversation, ENRICH_SCHEMA,
+                temperature=temperature if attempt == 0 else max(temperature, 0.3), seed=seed + attempt * 100,
             )
             return _Output.model_validate(raw)
         except (LLMBadOutput, ValidationError):

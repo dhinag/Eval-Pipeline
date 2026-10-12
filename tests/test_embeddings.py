@@ -135,3 +135,9 @@ def test_make_embedder_builds_the_configured_kind(tmp_path: Path) -> None:
     ollama = make_embedder(EmbedConfig(kind="ollama", model="nomic-embed-text"), tmp_path)
     assert ollama.model_id == "ollama:nomic-embed-text"
     assert isinstance(ollama, CachedEmbedder)
+
+
+def test_a_server_error_gives_a_resumable_message_not_a_raw_http_error() -> None:
+    with patch("goldenset.embeddings.requests.post", lambda *a, **k: FakeResponse(500, {})):
+        with pytest.raises(EmbedderUnavailable, match="500"):
+            OllamaEmbedder("nomic-embed-text", "http://localhost:11434").embed(["x"])

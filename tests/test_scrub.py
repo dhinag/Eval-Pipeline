@@ -152,3 +152,26 @@ def test_a_trace_with_nothing_to_scrub_passes_through_unchanged(tmp_path: Path, 
     assert out[0].trace == make_trace("t-1", user_text="Where is my order?")
     assert out[0].meta.scrub is not None and out[0].meta.scrub.entity_counts == {}
     assert read_decisions(tmp_path) == []
+
+
+class ExplodesOnPoison:
+    """Raises on one record, with the raw text in the message, like a library error on odd input."""
+
+    def detect(self, text: str) -> list[Detection]:
+        if "POISON" in text:
+            raise ValueError(f"cannot analyse: {text}")
+        return []
+
+    def redact(self, text: str, detections: list[Detection], mapper: PlaceholderMapper) -> str:
+        return text
+
+
+def test_an_exception_on_one_record_quarantines_it_and_the_run_continues(tmp_path: Path) -> None:
+    ctx = make_ctx(tmp_path, stage="scrub")
+    records = [make_record("t-1", "fine"), make_record("t-2", "POISON dana@example.com"), make_record("t-3", "also fine")]
+    out = list(ScrubStage(ExplodesOnPoison()).run(iter(records), ctx))
+    assert [r.trace.trace_id for r in out] == ["t-1", "t-3"]
+    entry = read_decisions(tmp_path)[0]
+    assert (entry["record_id"], entry["action"], entry["reason"]) == ("t-2", "quarantined", "scrub_error")
+    assert entry["details"] == {"error_type": "ValueError"}
+    assert "dana@example.com" not in (tmp_path / "decisions.jsonl").read_text()  # exception text never logged

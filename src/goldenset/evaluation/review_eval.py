@@ -29,7 +29,7 @@ def _final_labels(decision: ReviewDecision, record: Record) -> tuple[str | None,
 def evaluate_review(run_dir: Path, hourly_rate_usd: float) -> dict[str, Any]:
     store = ReviewStore(run_dir)
     queue = {r.trace.trace_id: r for r in store.queue() if not r.meta.rereview}
-    decisions = store.decisions()
+    decisions = [d for d in store.decisions() if d.trace_id in queue]  # ignore decisions for traces no longer queued
     first = {d.trace_id: d for d in decisions if not d.is_rereview}
     again = {d.trace_id: d for d in decisions if d.is_rereview}
 

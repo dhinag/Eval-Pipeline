@@ -54,10 +54,10 @@ def test_confidence_is_half_per_agreeing_field(tmp_path: Path) -> None:
     assert out[0].meta.enrichment.confidence == 0.0  # type: ignore[union-attr]
 
 
-def test_a_bad_answer_is_retried_with_a_new_seed(tmp_path: Path) -> None:
+def test_a_bad_answer_is_retried_with_a_new_seed_and_some_temperature(tmp_path: Path) -> None:
     out, llm = run(tmp_path, [LLMBadOutput("junk"), good(), good()])
     assert out[0].meta.enrichment.confidence == 1.0  # type: ignore[union-attr]
-    assert llm.calls == [(0.0, 1), (0.0, 101), (0.7, 2)]
+    assert llm.calls == [(0.0, 1), (0.3, 101), (0.7, 2)]  # a retry at temperature 0 would repeat the bad answer
 
 
 def test_labels_outside_the_taxonomy_count_as_bad_output(tmp_path: Path) -> None:

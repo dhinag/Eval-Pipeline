@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,14 @@ from goldenset.jsonl import iter_lines
 from goldenset.models import Trace
 
 OnReject = Callable[[str, str, dict[str, Any]], None]
+
+# A rejected row has not been validated, so its trace_id may be anything. Only id-shaped strings are copied
+# into the decision log; everything else is identified by line number so row content never reaches it.
+_SAFE_ID = re.compile(r"[A-Za-z0-9._:-]{1,64}")
+
+
+def _safe_id(value: Any, line_no: int) -> str:
+    return value if isinstance(value, str) and _SAFE_ID.fullmatch(value) else f"line-{line_no}"
 
 
 def iter_valid_traces(path: Path, on_reject: OnReject) -> Iterator[Trace]:
@@ -27,7 +36,7 @@ def iter_valid_traces(path: Path, on_reject: OnReject) -> Iterator[Trace]:
         try:
             trace = Trace.model_validate(row)
         except ValidationError as exc:
-            record_id = str(row.get("trace_id", f"line-{line_no}")) if isinstance(row, dict) else f"line-{line_no}"  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+            record_id = _safe_id(row.get("trace_id") if isinstance(row, dict) else None, line_no)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
             on_reject(record_id, "schema_invalid", {"errors": exc.error_count()})
             continue
         if trace.trace_id in seen:

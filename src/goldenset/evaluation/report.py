@@ -89,6 +89,23 @@ def _review_section(data: dict[str, Any]) -> str:
     ])
 
 
+def _calibration_section(data: dict[str, Any]) -> str:
+    def row_at(block: dict[str, Any]) -> dict[str, float]:
+        return next(r for r in block["rows"] if r["threshold"] == block["chosen"])
+
+    dedup, novelty = data["dedup"], data["novelty"]
+    d, n = row_at(dedup), row_at(novelty)
+    cap = "false-merge cap met" if dedup["cap_met"] else (
+        "false-merge cap not met: embedding similarity could not separate planted duplicates from "
+        "different conversations on the same topic, so the best balance of recall and precision was chosen"
+    )
+    return "\n".join([
+        "## Calibration", "", f"Embedding model: {data['model']}.", "",
+        f"- dedup threshold {dedup['chosen']} ({cap}); duplicate recall {_fmt(d['dup_recall'])}, false-merge rate {_fmt(d['false_merge_rate'])}.",
+        f"- novelty threshold {novelty['chosen']}; covered recall {_fmt(n['covered_recall'])}, novel loss {_fmt(n['novel_loss'])}.",
+    ])
+
+
 def render_report(run_dir: Path) -> str:
     stats = json.loads((run_dir / "stats.json").read_text())
     sections = [f"# Run report: {run_dir.name}", "", "## Funnel", "", funnel_table(stats)]
@@ -101,6 +118,9 @@ def render_report(run_dir: Path) -> str:
             path = eval_dir / f"{name}.json"
             if path.exists():
                 sections += ["", builder(json.loads(path.read_text()))]
+        calibration = eval_dir / "calibration.json"
+        if calibration.exists():
+            sections += ["", _calibration_section(json.loads(calibration.read_text()))]
     return "\n".join(sections) + "\n"
 
 

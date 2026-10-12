@@ -123,3 +123,28 @@ def test_make_llm_builds_the_configured_kind(tmp_path: Path) -> None:
     assert make_llm("rules", EnrichConfig(), tmp_path).model_id == "rules-v1"
     assert make_llm("ollama", EnrichConfig(model="qwen3:8b"), tmp_path).model_id == "ollama:qwen3:8b"
     assert json.loads(json.dumps(ENRICH_SCHEMA))["required"]
+
+
+def test_a_read_timeout_is_bad_output_so_one_slow_record_cannot_stall_every_resume() -> None:
+    def slow(*a: Any, **k: Any) -> FakeResponse:
+        raise requests.ReadTimeout("slow")
+
+    with patch("goldenset.llm.requests.post", slow):
+        with pytest.raises(LLMBadOutput, match="timed out"):
+            OllamaLLM().complete_json("s", "u", {}, temperature=0, seed=1)
+
+
+def test_a_connect_timeout_means_the_server_is_unavailable() -> None:
+    def refuse(*a: Any, **k: Any) -> FakeResponse:
+        raise requests.ConnectTimeout("no route")
+
+    with patch("goldenset.llm.requests.post", refuse):
+        with pytest.raises(LLMUnavailable, match="ollama serve"):
+            OllamaLLM().complete_json("s", "u", {}, temperature=0, seed=1)
+
+
+@pytest.mark.parametrize("status", [400, 500, 503])
+def test_other_http_errors_are_bad_output_not_a_crash(status: int) -> None:
+    with patch("goldenset.llm.requests.post", lambda *a, **k: FakeResponse(status, {})):
+        with pytest.raises(LLMBadOutput, match=str(status)):
+            OllamaLLM().complete_json("s", "u", {}, temperature=0, seed=1)

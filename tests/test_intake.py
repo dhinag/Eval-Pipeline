@@ -62,3 +62,15 @@ def test_trace_with_no_turns_or_no_user_text_is_rejected(tmp_path: Path) -> None
     ids, rejected = _collect(path)
     assert ids == ["t-ok"]
     assert rejected == [("t-empty", "no_turns"), ("t-blank", "no_user_text")]
+
+
+def test_a_rejected_rows_id_is_never_arbitrary_content(tmp_path: Path) -> None:
+    path = tmp_path / "in.jsonl"
+    rows = [
+        {"trace_id": {"nested": "dana@example.com"}, "turns": "not a list"},
+        {"trace_id": "customer dana@example.com wrote this very long free text " * 3, "turns": 1},
+        {"trace_id": "t-bad-1", "turns": 1},
+    ]
+    path.write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
+    _, rejected = _collect(path)
+    assert rejected == [("line-1", "schema_invalid"), ("line-2", "schema_invalid"), ("t-bad-1", "schema_invalid")]

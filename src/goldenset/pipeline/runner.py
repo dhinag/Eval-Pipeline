@@ -45,12 +45,29 @@ class Runner:
     def _marker(self, idx: int) -> Path:
         return self.stage_file(idx).with_suffix(".done.json")
 
+    @staticmethod
+    def _digest(path_text: str) -> str:
+        """Content hash of a data file, so regenerating a file at the same path invalidates stale stages."""
+        if not path_text:
+            return ""
+        path = Path(path_text)
+        if not path.exists():
+            return "missing"
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1 << 20), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+
     def fingerprints(self) -> list[str]:
-        """Chained: changing config or any earlier stage's version invalidates every later stage."""
+        """Chained: changing config, the input data, or any earlier stage's version invalidates every later stage."""
+        input_digest = self._digest(self.config.input_path)
+        seed_digest = self._digest(self.config.seed_golden_path)
         previous = ""
         out: list[str] = []
-        for stage in self.stages:
-            raw = f"{previous}|{stage.name}|{stage.version}|{self.config.model_dump_json()}"
+        for idx, stage in enumerate(self.stages):
+            data = (input_digest if idx == 0 else "") + (seed_digest if stage.name == "novelty" else "")
+            raw = f"{previous}|{stage.name}|{stage.version}|{self.config.model_dump_json()}|{data}"
             previous = hashlib.sha256(raw.encode()).hexdigest()
             out.append(previous)
         return out
@@ -129,11 +146,26 @@ class Runner:
             except Exception as exc:
                 raise StageFailed(stage.name, exc) from exc
             self._stats_path().write_text(json.dumps(all_stats, indent=2, sort_keys=True))
+            if only is not None:  # a lone re-run leaves everything after it out of date
+                for later in range(idx + 1, len(self.stages)):
+                    self._marker(later).unlink(missing_ok=True)
             if stage.name == until:
                 break
         return all_stats
 
+    def _archive_review_decisions(self) -> None:
+        """Decisions were made on the old queue, so they must not be applied to a rebuilt one."""
+        path = self.run_dir / "review" / "decisions.jsonl"
+        if not path.exists():
+            return
+        number = 1
+        while (path.parent / f"decisions.stale-{number}.jsonl").exists():
+            number += 1
+        path.rename(path.parent / f"decisions.stale-{number}.jsonl")
+
     def _run_stage(self, idx: int, stage: Stage, fingerprint: str) -> dict[str, float]:
+        if stage.name == "review_queue":
+            self._archive_review_decisions()
         self.decisions.clear_stage(stage.name)
         ctx = StageContext(stage.name, self.run_dir, self.config, self.decisions, self.services)
         counters = {"in": 0, "out": 0}

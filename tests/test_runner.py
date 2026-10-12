@@ -174,3 +174,70 @@ def test_config_and_stage_versions_are_recorded(tmp_path: Path, input_file: Path
     saved = json.loads((run_dir / "config.json").read_text())
     assert saved["stages"] == {"load": "1", "drop_odd": "1"}
     assert saved["config"]["seed"] == 1337
+
+
+def test_changing_the_input_file_at_the_same_path_reruns_everything(tmp_path: Path, input_file: Path) -> None:
+    run_dir = tmp_path / "run"
+    stage = DropOdd()
+    Runner(_config(input_file), run_dir, [Load(), stage]).run()
+    write_jsonl(input_file, [make_trace(f"t-{i}", f"different text {i}") for i in range(1, 7)])
+    Runner(_config(input_file), run_dir, [Load(), stage]).run()
+    assert stage.calls == 2
+
+
+class Novelty:
+    name = "novelty"
+    version = "1"
+    persist: Literal["full", "ids"] = "full"
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def run(self, records: Iterator[Record], ctx: StageContext) -> Iterator[Record]:
+        self.calls += 1
+        yield from records
+
+
+def test_changing_the_seed_file_content_reruns_the_novelty_stage(tmp_path: Path, input_file: Path) -> None:
+    seed = tmp_path / "seed.jsonl"
+    seed.write_text("one\n")
+    config = _config(input_file, seed_golden_path=str(seed))
+    run_dir = tmp_path / "run"
+    stage = Novelty()
+    Runner(config, run_dir, [Load(), stage]).run()
+    Runner(config, run_dir, [Load(), stage]).run()
+    assert stage.calls == 1
+    seed.write_text("two\n")
+    Runner(config, run_dir, [Load(), stage]).run()
+    assert stage.calls == 2
+
+
+def test_running_one_stage_alone_invalidates_the_stages_after_it(tmp_path: Path, input_file: Path) -> None:
+    run_dir = tmp_path / "run"
+    first, second = DropOdd(), Novelty()
+    runner = Runner(_config(input_file), run_dir, [Load(), first, second])
+    runner.run()
+    runner.run(only="drop_odd")
+    assert not (run_dir / "stages/03_novelty.done.json").exists()
+    runner.run()
+    assert second.calls == 2
+
+
+class ReviewQueue:
+    name = "review_queue"
+    version = "1"
+    persist: Literal["full", "ids"] = "full"
+
+    def run(self, records: Iterator[Record], ctx: StageContext) -> Iterator[Record]:
+        yield from records
+
+
+def test_rebuilding_the_review_queue_archives_decisions_made_on_the_old_one(tmp_path: Path, input_file: Path) -> None:
+    run_dir = tmp_path / "run"
+    runner = Runner(_config(input_file), run_dir, [Load(), ReviewQueue()])
+    runner.run()
+    decisions = run_dir / "review" / "decisions.jsonl"
+    write_jsonl(decisions, [{"trace_id": "t-1", "action": "accept"}])
+    runner.run(force=True)
+    assert not decisions.exists()
+    assert len(list((run_dir / "review").glob("decisions.stale-*.jsonl"))) == 1

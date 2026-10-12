@@ -51,13 +51,17 @@ class OllamaLLM:
         }
         try:
             response = requests.post(f"{self.url}/api/chat", json=body, timeout=self.timeout)
-        except (requests.ConnectionError, requests.Timeout) as exc:
+        except requests.ConnectionError as exc:  # includes ConnectTimeout
             raise LLMUnavailable(
                 f"Cannot reach Ollama at {self.url}. Start it with `ollama serve` and re-run to resume."
             ) from exc
+        except requests.Timeout as exc:
+            # One slow generation is deterministic, so treating it as "server down" would stall every resume.
+            raise LLMBadOutput(f"request timed out after {self.timeout:.0f}s") from exc
         if response.status_code == 404:
             raise LLMUnavailable(f"Model not found. Run `ollama pull {self.model}` and re-run.")
-        response.raise_for_status()
+        if response.status_code >= 400:
+            raise LLMBadOutput(f"Ollama returned HTTP {response.status_code}")
         content = response.json().get("message", {}).get("content", "")
         try:
             data = json.loads(content)

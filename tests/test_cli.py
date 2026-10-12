@@ -95,3 +95,12 @@ def test_a_failed_stage_exits_non_zero_with_the_message(tmp_path: Path, capsys: 
     cfg.write_text(json.dumps({"input_path": str(tmp_path / "missing.jsonl"), "embed": {"kind": "hashing"}, "llm_kind": "rules"}))
     assert main(["run", "--config", str(cfg), "--run-id", "r1", "--runs-dir", str(tmp_path / "runs")]) == 1
     assert "Stage 'ingest' failed" in capsys.readouterr().err
+
+
+def test_a_failed_run_prints_the_command_that_resumes_it(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    cfg = tmp_path / "cfg.json"
+    cfg.write_text(json.dumps({"input_path": str(tmp_path / "missing.jsonl"), "embed": {"kind": "hashing"}, "llm_kind": "rules"}))
+    assert main(["run", "--config", str(cfg), "--runs-dir", str(tmp_path / "runs")]) == 1
+    err = capsys.readouterr().err
+    run_id = next((tmp_path / "runs").iterdir()).name
+    assert f"--run-id {run_id}" in err and "Resume with" in err

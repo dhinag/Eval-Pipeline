@@ -87,7 +87,10 @@ class OllamaEmbedder:
                 ) from exc
             if response.status_code == 404:
                 raise EmbedderUnavailable(f"Model not found. Run `ollama pull {self.model}` and re-run.")
-            response.raise_for_status()
+            if response.status_code >= 400:
+                raise EmbedderUnavailable(
+                    f"Ollama returned HTTP {response.status_code}. Check the server log and re-run to resume."
+                )
             rows.extend(response.json()["embeddings"])
         return _normalise(np.asarray(rows, dtype=np.float32))
 
