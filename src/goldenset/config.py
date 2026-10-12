@@ -20,7 +20,8 @@ class SampleConfig(_Cfg):
 
 class ScrubConfig(_Cfg):
     spacy_model: str = "en_core_web_sm"
-    threshold: float = 0.5
+    # 0.4 rather than Presidio's usual 0.5: a bare phone number scores 0.4, so 0.5 missed 36% of them (see the report).
+    threshold: float = 0.4
 
 
 class EmbedConfig(_Cfg):

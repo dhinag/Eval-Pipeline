@@ -122,7 +122,7 @@ def _replacer(entity_type: str, mapper: PlaceholderMapper) -> Callable[[str], st
 
 
 class ScrubEngine:
-    def __init__(self, spacy_model: str = "en_core_web_sm", threshold: float = 0.5) -> None:
+    def __init__(self, spacy_model: str = "en_core_web_sm", threshold: float = 0.4) -> None:
         nlp = NlpEngineProvider(
             nlp_configuration={
                 "nlp_engine_name": "spacy",

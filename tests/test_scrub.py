@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from goldenset.config import ScrubConfig
 from goldenset.models import ToolCall, Trace, Turn
 from goldenset.stages.scrub import ScrubStage, scrub_trace
 from goldenset.stages.scrub_engine import Detection, PlaceholderMapper, ScrubEngine
@@ -57,13 +58,14 @@ def test_phrasings_the_recognizers_do_not_cover_are_missed_on_purpose(engine: Sc
     assert "4242" in redact(engine, "card last 4: 4242")
 
 
-def test_phone_numbers_without_a_context_word_need_a_lower_threshold(engine: ScrubEngine) -> None:
-    # Presidio scores a bare phone number 0.4 and only lifts it to 0.75 next to words like "phone" or
-    # "number". "call me on ..." has no such word, so the default threshold of 0.5 misses it. This is a
-    # real recall gap that scrub evaluation reports, and the threshold is the lever for it.
+def test_the_default_threshold_is_low_enough_to_catch_phone_numbers_without_a_context_word() -> None:
+    # Presidio scores a bare phone number 0.4 and only lifts it to 0.75 next to words like "phone" or "number".
+    # At 0.5, 36% of planted phone numbers survived in the full evaluation; at 0.4 none did, at almost no cost
+    # in precision. So 0.4 is the default, and 0.5 is shown here as the setting that misses them.
     text = "Please call me on (415) 867-5309 today."
-    assert redact(engine, text) == text
-    assert "<PHONE_NUMBER_1>" in redact(ScrubEngine(threshold=0.4), text)
+    assert ScrubConfig().threshold == 0.4
+    assert "<PHONE_NUMBER_1>" in redact(ScrubEngine(), text)
+    assert redact(ScrubEngine(threshold=0.5), text) == text
 
 
 def test_scrubbing_twice_changes_nothing(engine: ScrubEngine) -> None:
