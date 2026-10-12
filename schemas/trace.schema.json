@@ -1,0 +1,168 @@
+{
+  "$defs": {
+    "RetrievedDoc": {
+      "additionalProperties": false,
+      "properties": {
+        "doc_id": {
+          "title": "Doc Id",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "doc_id",
+        "title",
+        "text"
+      ],
+      "title": "RetrievedDoc",
+      "type": "object"
+    },
+    "ToolCall": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "title": "Arguments",
+          "type": "object"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "result": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result"
+        }
+      },
+      "required": [
+        "name",
+        "arguments"
+      ],
+      "title": "ToolCall",
+      "type": "object"
+    },
+    "Turn": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "user",
+            "assistant"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "tool_calls": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ToolCall"
+          },
+          "title": "Tool Calls",
+          "type": "array"
+        }
+      },
+      "required": [
+        "role",
+        "content"
+      ],
+      "title": "Turn",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "app_version": {
+      "title": "App Version",
+      "type": "string"
+    },
+    "feedback": {
+      "anyOf": [
+        {
+          "enum": [
+            "up",
+            "down"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Feedback"
+    },
+    "model": {
+      "title": "Model",
+      "type": "string"
+    },
+    "retrieved_docs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/RetrievedDoc"
+      },
+      "title": "Retrieved Docs",
+      "type": "array"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "started_at": {
+      "title": "Started At",
+      "type": "string"
+    },
+    "trace_id": {
+      "title": "Trace Id",
+      "type": "string"
+    },
+    "turns": {
+      "items": {
+        "$ref": "#/$defs/Turn"
+      },
+      "title": "Turns",
+      "type": "array"
+    }
+  },
+  "required": [
+    "trace_id",
+    "started_at",
+    "model",
+    "app_version",
+    "turns"
+  ],
+  "title": "Trace",
+  "type": "object"
+}

@@ -1,0 +1,289 @@
+{
+  "$defs": {
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "cluster_size": {
+          "title": "Cluster Size",
+          "type": "integer"
+        },
+        "enrichment_model": {
+          "title": "Enrichment Model",
+          "type": "string"
+        },
+        "enrichment_prompt_version": {
+          "title": "Enrichment Prompt Version",
+          "type": "string"
+        },
+        "reviewed_at": {
+          "title": "Reviewed At",
+          "type": "string"
+        },
+        "reviewer": {
+          "title": "Reviewer",
+          "type": "string"
+        },
+        "reviewer_action": {
+          "enum": [
+            "accept",
+            "correct"
+          ],
+          "title": "Reviewer Action",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "scrub_entity_counts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Scrub Entity Counts",
+          "type": "object"
+        },
+        "source_trace_id": {
+          "title": "Source Trace Id",
+          "type": "string"
+        },
+        "stage_versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Stage Versions",
+          "type": "object"
+        }
+      },
+      "required": [
+        "source_trace_id",
+        "run_id",
+        "stage_versions",
+        "scrub_entity_counts",
+        "cluster_size",
+        "enrichment_model",
+        "enrichment_prompt_version",
+        "reviewer",
+        "reviewer_action",
+        "reviewed_at"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "RetrievedDoc": {
+      "additionalProperties": false,
+      "properties": {
+        "doc_id": {
+          "title": "Doc Id",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "doc_id",
+        "title",
+        "text"
+      ],
+      "title": "RetrievedDoc",
+      "type": "object"
+    },
+    "ToolCall": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "title": "Arguments",
+          "type": "object"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "result": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result"
+        }
+      },
+      "required": [
+        "name",
+        "arguments"
+      ],
+      "title": "ToolCall",
+      "type": "object"
+    },
+    "Trace": {
+      "additionalProperties": false,
+      "properties": {
+        "app_version": {
+          "title": "App Version",
+          "type": "string"
+        },
+        "feedback": {
+          "anyOf": [
+            {
+              "enum": [
+                "up",
+                "down"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Feedback"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "retrieved_docs": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/RetrievedDoc"
+          },
+          "title": "Retrieved Docs",
+          "type": "array"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "started_at": {
+          "title": "Started At",
+          "type": "string"
+        },
+        "trace_id": {
+          "title": "Trace Id",
+          "type": "string"
+        },
+        "turns": {
+          "items": {
+            "$ref": "#/$defs/Turn"
+          },
+          "title": "Turns",
+          "type": "array"
+        }
+      },
+      "required": [
+        "trace_id",
+        "started_at",
+        "model",
+        "app_version",
+        "turns"
+      ],
+      "title": "Trace",
+      "type": "object"
+    },
+    "Turn": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "user",
+            "assistant"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "tool_calls": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ToolCall"
+          },
+          "title": "Tool Calls",
+          "type": "array"
+        }
+      },
+      "required": [
+        "role",
+        "content"
+      ],
+      "title": "Turn",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "difficulty": {
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "title": "Difficulty",
+      "type": "string"
+    },
+    "failure_mode": {
+      "title": "Failure Mode",
+      "type": "string"
+    },
+    "golden_id": {
+      "title": "Golden Id",
+      "type": "string"
+    },
+    "ideal_response": {
+      "title": "Ideal Response",
+      "type": "string"
+    },
+    "intent": {
+      "title": "Intent",
+      "type": "string"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "trace": {
+      "$ref": "#/$defs/Trace"
+    }
+  },
+  "required": [
+    "golden_id",
+    "trace",
+    "intent",
+    "failure_mode",
+    "ideal_response",
+    "difficulty",
+    "provenance"
+  ],
+  "title": "GoldenRecord",
+  "type": "object"
+}

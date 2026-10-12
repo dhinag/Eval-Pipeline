@@ -1,0 +1,99 @@
+{
+  "$defs": {
+    "CategoryScore": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "title": "Category",
+          "type": "string"
+        },
+        "n": {
+          "title": "N",
+          "type": "integer"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "category",
+        "n",
+        "score"
+      ],
+      "title": "CategoryScore",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "app_version": {
+      "title": "App Version",
+      "type": "string"
+    },
+    "category_scores": {
+      "items": {
+        "$ref": "#/$defs/CategoryScore"
+      },
+      "title": "Category Scores",
+      "type": "array"
+    },
+    "cost_usd": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cost Usd"
+    },
+    "created_at": {
+      "title": "Created At",
+      "type": "string"
+    },
+    "golden_set_version": {
+      "title": "Golden Set Version",
+      "type": "string"
+    },
+    "judge_agreement": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Judge Agreement"
+    },
+    "latency_ms_p50": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Latency Ms P50"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "app_version",
+    "golden_set_version",
+    "created_at",
+    "category_scores"
+  ],
+  "title": "EvalResult",
+  "type": "object"
+}
